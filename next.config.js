@@ -1,6 +1,6 @@
 module.exports = {
     server: {
-      port: 3001, // Cambia el puerto aquí
+      port: 3000, // Cambia el puerto aquí
     },
   };
   
