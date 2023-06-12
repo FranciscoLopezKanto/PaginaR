@@ -73,7 +73,7 @@ function App() {
         console.error(error);
         alert('Error al crear la reserva');
       });
-      console.log("entre al fetch");
+      
   };
 
   // Lista de opciones de servicio
