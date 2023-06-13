@@ -1,6 +1,8 @@
 "use client"
-import React, { useState } from 'react';
-import './globals.css';
+import React, { useState, useEffect } from 'react';
+import './app.css';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 function App() {
   const containerStyle = {
@@ -28,43 +30,49 @@ function App() {
     marginBottom: '20px',
   };
 
-  // Estado para guardar los valores de los campos de entrada
   const [service, setService] = useState('');
   const [numberOfPeople, setNumberOfPeople] = useState(0);
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(null);
+  const [blockedDates, setBlockedDates] = useState([]);
+
+  useEffect(() => {
+    // Obtener las fechas bloqueadas desde el backend
+    fetch('http://localhost:3001/api/blocked-dates')
+      .then((response) => response.json())
+      .then((data) => setBlockedDates(data))
+      .catch((error) => console.error(error));
+  }, []);
 
   const handleReservationConfirm = () => {
-    // Validar los campos de entrada antes de enviar la solicitud
     if (!service || numberOfPeople <= 0 || !date) {
       alert('Por favor, complete todos los campos de la reserva');
       return;
     }
 
-    // Crear el objeto de reserva
+    if (blockedDates.includes(date.toISOString().split('T')[0])) {
+      alert('Fecha no disponible, selecciona otra');
+      return;
+    }
+
     const reservation = {
       service,
       numberOfPeople,
-      date,
-      
+      date: date.toISOString().split('T')[0],
     };
-    console.log('esta sirviendo el reservation');
-    // Enviar la reserva al backend
+
     fetch('http://localhost:3001/api/reservations', {
-      
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(reservation),
     })
-    
       .then((response) => {
         if (response.ok) {
           alert('Reserva creada exitosamente');
-          // Restablecer los campos de entrada después de la confirmación
           setService('');
           setNumberOfPeople(0);
-          setDate('');
+          setDate(null);
         } else {
           throw new Error('Error al crear la reserva');
         }
@@ -73,50 +81,61 @@ function App() {
         console.error(error);
         alert('Error al crear la reserva');
       });
-      
   };
 
-  // Lista de opciones de servicio
   const serviceOptions = ['Tour astronómico', 'Paseo en caballo', 'Nadar en el Puclaro', 'Ir a las cascadas'];
-
-  // Obtener la fecha de mañana
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowDate = tomorrow.toISOString().split('T')[0];
 
   return (
     <div style={containerStyle}>
       <div style={boxStyle}>
         <h1 style={headingStyle}>Reservas Elki Magic</h1>
 
-        <select
-          style={inputStyle}
-          value={service}
-          onChange={(e) => setService(e.target.value)}
-        >
-          <option value="">Seleccione un servicio</option>
-          {serviceOptions.map((option) => (
-            <option value={option} key={option}>{option}</option>
-          ))}
-        </select>
+        <div className="form-group">
+          <label htmlFor="service">Servicio</label>
+          <select
+            id="service"
+            style={inputStyle}
+            value={service}
+            onChange={(e) => setService(e.target.value)}
+          >
+            <option value="">Seleccione un servicio</option>
+            {serviceOptions.map((option) => (
+              <option value={option} key={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <input
-          type="number"
-          style={inputStyle}
-          placeholder="Número de Personas"
-          min="0"
-          step="1"
-          value={numberOfPeople}
-          onChange={(e) => setNumberOfPeople(Number(e.target.value))}
-        />
-        <input
-          type="date"
-          style={inputStyle}
-          placeholder="Fecha"
-          min={tomorrowDate}
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
+        <div className="form-group">
+          <label htmlFor="numberOfPeople">Cantidad de personas</label>
+          <input
+            id="numberOfPeople"
+            type="number"
+            style={inputStyle}
+            value={numberOfPeople}
+            onChange={(e) => setNumberOfPeople(parseInt(e.target.value))}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="date">Fecha</label>
+          <DatePicker
+            id="date"
+            selected={date}
+            onChange={(date) => setDate(date)}
+            minDate={new Date()}
+            filterDate={(date) => {
+              const currentDate = new Date();
+              currentDate.setHours(0, 0, 0, 0);
+              return date >= currentDate && !blockedDates.includes(date.toISOString().split('T')[0]);
+            }}
+            disabledKeyboardNavigation
+            dateFormat="dd/MM/yyyy"
+            placeholderText="Seleccione una fecha"
+            className="datepicker"
+          />
+        </div>
 
         <button onClick={handleReservationConfirm}>Confirmar</button>
       </div>

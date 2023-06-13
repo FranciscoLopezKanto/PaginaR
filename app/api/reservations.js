@@ -16,9 +16,6 @@ const pool = new Pool({
   connectionString: 'postgres://mmsqxbxg:HZYvCd7KAvBkb9ZNswioa_Pg5ajJ4-Nq@silly.db.elephantsql.com:5432/mmsqxbxg',
 });
 
-// Array para almacenar las reservas
-const reservations = [];
-
 // Ruta para recibir las solicitudes POST de reservas
 app.post('/api/reservations', (req, res) => {
   const { service, numberOfPeople, date } = req.body;
@@ -46,7 +43,7 @@ app.post('/api/reservations', (req, res) => {
 
   // Guardar la reserva en la base de datos
   pool.query(
-    'INSERT INTO reservas (tipo_servicio,cant_personas,fecha) VALUES ($1, $2, $3)',
+    'INSERT INTO reservas (tipo_servicio, cant_personas, fecha) VALUES ($1, $2, $3)',
     [newReservation.service, newReservation.numberOfPeople, newReservation.date],
     (err, result) => {
       if (err) {
@@ -61,7 +58,6 @@ app.post('/api/reservations', (req, res) => {
 });
 
 // Ruta para obtener todas las reservas guardadas
-// Ruta para obtener todas las reservas guardadas
 app.get('/api/reservations', (req, res) => {
   // Obtener todas las reservas de la base de datos
   pool.query('SELECT * FROM reservas', (err, result) => {
@@ -74,9 +70,9 @@ app.get('/api/reservations', (req, res) => {
       // Formatear las fechas de las reservas existentes
       const formattedReservations = result.rows.map((row) => {
         return {
-          service: row.service,
-          numberOfPeople: row.number_of_people,
-          date: row.date instanceof Date ? row.date.toISOString().split('T')[0] : null,
+          service: row.tipo_servicio,
+          numberOfPeople: row.cant_personas,
+          date: row.fecha instanceof Date ? row.fecha.toISOString().split('T')[0] : null,
           timestamp: row.timestamp,
         };
       });
@@ -89,10 +85,30 @@ app.get('/api/reservations', (req, res) => {
     }
   });
 });
+// Ruta para obtener las fechas bloqueadas
+// Ruta para obtener las fechas bloqueadas
+app.get('/api/blocked-dates', (req, res) => {
+  // Obtener las fechas bloqueadas de la base de datos
+  pool.query('SELECT fecha FROM reservas WHERE fecha >= CURRENT_DATE', (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al obtener las fechas bloqueadas' });
+    }
 
+    try {
+      // Formatear las fechas bloqueadas como 'YYYY-MM-DD'
+      const blockedDates = result.rows.map((row) => row.fecha.toISOString().split('T')[0]);
+
+      // Enviar las fechas bloqueadas como respuesta
+      res.json(blockedDates);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Error al formatear las fechas bloqueadas' });
+    }
+  });
+});
 
 // Iniciar el servidor en el puerto 3001
 app.listen(3001, () => {
   console.log('Servidor backend iniciado en el puerto 3001');
 });
-
