@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import './app.css';
+import './globals.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
