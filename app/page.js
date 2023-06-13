@@ -13,25 +13,30 @@ function App() {
   };
 
   const boxStyle = {
-    padding: '20px',
-    border: '1px solid #ccc',
-    borderRadius: '5px',
+    padding: '22px',
+    border: '3px solid #ccc',
+    borderRadius: '10px',
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    display: 'grid',
+    gridTemplateColumns: '1fr',
+    gap: '12px',
+    width: '300px', // Comenta o descomenta esta línea para ajustar el ancho del cuadro principal
   };
 
   const inputStyle = {
-    margin: '10px',
-    padding: '5px',
+    margin: '12px',
+    padding: '3px',
     fontSize: '16px',
+    width: '80%', // Comenta o descomenta esta línea para ajustar el ancho de los campos de entrada
   };
 
   const headingStyle = {
-    fontSize: '24px',
-    marginBottom: '20px',
+    fontSize: '27px',
+    marginBottom: '21px',
   };
 
   const [service, setService] = useState('');
-  const [numberOfPeople, setNumberOfPeople] = useState(0);
+  const [numberOfPeople, setNumberOfPeople] = useState(1);
   const [date, setDate] = useState(null);
   const [blockedDates, setBlockedDates] = useState([]);
 
@@ -71,7 +76,7 @@ function App() {
         if (response.ok) {
           alert('Reserva creada exitosamente');
           setService('');
-          setNumberOfPeople(0);
+          setNumberOfPeople(1);
           setDate(null);
         } else {
           throw new Error('Error al crear la reserva');
@@ -114,7 +119,8 @@ function App() {
             type="number"
             style={inputStyle}
             value={numberOfPeople}
-            onChange={(e) => setNumberOfPeople(parseInt(e.target.value))}
+            onChange={(e) => setNumberOfPeople(Math.max(1, parseInt(e.target.value)))} // No permitir valores inferiores a 1
+            min="1" // Establecer mínimo a 1
           />
         </div>
 
@@ -137,7 +143,9 @@ function App() {
           />
         </div>
 
-        <button onClick={handleReservationConfirm}>Confirmar</button>
+        <button onClick={handleReservationConfirm} disabled={numberOfPeople <= 0}>
+          Confirmar
+        </button>
       </div>
     </div>
   );
