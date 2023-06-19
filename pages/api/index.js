@@ -13,7 +13,7 @@ app.use(cors());
 
 // Configuración de la base de datos
 const pool = new Pool({
-  connectionString: 'postgres://mmsqxbxg:HZYvCd7KAvBkb9ZNswioa_Pg5ajJ4-Nq@silly.db.elephantsql.com:5432/mmsqxbxg',
+  connectionString: 'postgres://usuario:contraseña@host:puerto/nombre_basedatos',
 });
 
 // Ruta para recibir las solicitudes POST de reservas
@@ -33,13 +33,13 @@ app.post('/api/reservations', (req, res) => {
   };
 
   // Verificar si la fecha es válida antes de formatearla
-  if (newReservation.date instanceof Date && !isNaN(newReservation.date)) {
-    // Formatear la fecha como 'YYYY-MM-DD'
-    newReservation.date = newReservation.date.toISOString().split('T')[0];
-  } else {
+  if (isNaN(newReservation.date)) {
     // Manejar el caso de fecha inválida
     return res.status(400).json({ error: 'Fecha de reserva inválida' });
   }
+
+  // Formatear la fecha como 'YYYY-MM-DD'
+  newReservation.date = newReservation.date.toISOString().split('T')[0];
 
   // Guardar la reserva en la base de datos
   pool.query(
@@ -68,14 +68,12 @@ app.get('/api/reservations', (req, res) => {
 
     try {
       // Formatear las fechas de las reservas existentes
-      const formattedReservations = result.rows.map((row) => {
-        return {
-          service: row.tipo_servicio,
-          numberOfPeople: row.cant_personas,
-          date: row.fecha instanceof Date ? row.fecha.toISOString().split('T')[0] : null,
-          timestamp: row.timestamp,
-        };
-      });
+      const formattedReservations = result.rows.map((row) => ({
+        service: row.tipo_servicio,
+        numberOfPeople: row.cant_personas,
+        date: row.fecha instanceof Date ? row.fecha.toISOString().split('T')[0] : null,
+        timestamp: row.timestamp,
+      }));
 
       // Enviar las reservas formateadas como respuesta
       res.json(formattedReservations);
@@ -85,7 +83,7 @@ app.get('/api/reservations', (req, res) => {
     }
   });
 });
-// Ruta para obtener las fechas bloqueadas
+
 // Ruta para obtener las fechas bloqueadas
 app.get('/api/blocked-dates', (req, res) => {
   // Obtener las fechas bloqueadas de la base de datos
